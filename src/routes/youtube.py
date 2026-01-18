@@ -5,105 +5,83 @@ from apify_client import ApifyClient
 
 from src.services.apify_client import get_apify_client
 from src.services.platforms.youtube import (
-    YouTubeService,
-    YouTubeScrapeRequest,
-    YouTubeScrapeResponse,
+    YouTubeResponse,
+    search,
+    scrape_channel,
+    get_video,
+    scrape_playlist,
 )
 
 router = APIRouter(prefix="/youtube", tags=["YouTube"])
 
 
-def get_service(client: ApifyClient = Depends(get_apify_client)) -> YouTubeService:
-    return YouTubeService(client)
-
-
-@router.post(
-    "/scrape",
-    response_model=YouTubeScrapeResponse,
-    summary="Scrape YouTube data",
-    description="""
-    Scrape YouTube videos, channels, and playlists.
-
-    **Options:**
-    - `searchQueries`: Search terms
-    - `channelUrls`: Channel URLs
-    - `videoUrls`: Direct video URLs
-    - `playlistUrls`: Playlist URLs
-
-    At least one option must be provided.
-    """,
-)
-async def scrape(
-    request: YouTubeScrapeRequest,
-    service: YouTubeService = Depends(get_service),
-) -> YouTubeScrapeResponse:
-    try:
-        return await service.scrape(request)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 @router.get(
     "/search",
-    response_model=YouTubeScrapeResponse,
+    response_model=YouTubeResponse,
     summary="Search YouTube",
 )
-async def search(
+async def search_youtube(
     q: str = Query(..., min_length=1),
     limit: int = Query(default=50, ge=1, le=500),
-    service: YouTubeService = Depends(get_service),
-) -> YouTubeScrapeResponse:
+    include_shorts: bool = Query(default=True, alias="includeShorts"),
+    client: ApifyClient = Depends(get_apify_client),
+) -> YouTubeResponse:
+    """Search YouTube videos."""
     try:
-        return await service.search(q, limit)
+        return await search(client, q, limit, include_shorts)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
     "/channel",
-    response_model=YouTubeScrapeResponse,
+    response_model=YouTubeResponse,
     summary="Scrape channel videos",
 )
-async def scrape_channel(
+async def get_channel_videos(
     url: str = Query(..., description="YouTube channel URL"),
     limit: int = Query(default=50, ge=1, le=500),
-    service: YouTubeService = Depends(get_service),
-) -> YouTubeScrapeResponse:
+    include_shorts: bool = Query(default=True, alias="includeShorts"),
+    include_streams: bool = Query(default=True, alias="includeStreams"),
+    client: ApifyClient = Depends(get_apify_client),
+) -> YouTubeResponse:
+    """Get videos from a YouTube channel."""
     try:
-        return await service.scrape_channel(url, limit)
+        return await scrape_channel(client, url, limit, include_shorts, include_streams)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
     "/video",
-    response_model=YouTubeScrapeResponse,
-    summary="Scrape video details",
+    response_model=YouTubeResponse,
+    summary="Get video details",
 )
-async def scrape_video(
+async def get_video_details(
     url: str = Query(..., description="YouTube video URL"),
-    include_comments: bool = Query(default=False),
-    service: YouTubeService = Depends(get_service),
-) -> YouTubeScrapeResponse:
+    include_comments: bool = Query(default=False, alias="includeComments"),
+    max_comments: int = Query(default=100, alias="maxComments", ge=0),
+    client: ApifyClient = Depends(get_apify_client),
+) -> YouTubeResponse:
+    """Get YouTube video details."""
     try:
-        return await service.scrape_video(url, include_comments)
+        return await get_video(client, url, include_comments, max_comments)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
     "/playlist",
-    response_model=YouTubeScrapeResponse,
+    response_model=YouTubeResponse,
     summary="Scrape playlist videos",
 )
-async def scrape_playlist(
+async def get_playlist_videos(
     url: str = Query(..., description="YouTube playlist URL"),
     limit: int = Query(default=50, ge=1, le=500),
-    service: YouTubeService = Depends(get_service),
-) -> YouTubeScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> YouTubeResponse:
+    """Get videos from a YouTube playlist."""
     try:
-        return await service.scrape_playlist(url, limit)
+        return await scrape_playlist(client, url, limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

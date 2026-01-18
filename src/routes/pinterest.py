@@ -5,104 +5,78 @@ from apify_client import ApifyClient
 
 from src.services.apify_client import get_apify_client
 from src.services.platforms.pinterest import (
-    PinterestService,
-    PinterestScrapeRequest,
-    PinterestScrapeResponse,
+    PinterestResponse,
+    scrape_board,
+    scrape_profile,
+    search,
+    get_pin,
 )
 
 router = APIRouter(prefix="/pinterest", tags=["Pinterest"])
 
 
-def get_service(client: ApifyClient = Depends(get_apify_client)) -> PinterestService:
-    return PinterestService(client)
-
-
-@router.post(
-    "/scrape",
-    response_model=PinterestScrapeResponse,
-    summary="Scrape Pinterest data",
-    description="""
-    Scrape Pinterest pins, boards, and profiles.
-
-    **Options:**
-    - `pinUrls`: Direct pin URLs
-    - `boardUrls`: Board URLs
-    - `profileUrls`: Profile URLs
-    - `searchQueries`: Search terms
-
-    At least one option must be provided.
-    """,
-)
-async def scrape(
-    request: PinterestScrapeRequest,
-    service: PinterestService = Depends(get_service),
-) -> PinterestScrapeResponse:
-    try:
-        return await service.scrape(request)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 @router.get(
     "/board",
-    response_model=PinterestScrapeResponse,
+    response_model=PinterestResponse,
     summary="Scrape board pins",
 )
-async def scrape_board(
+async def get_board_pins(
     url: str = Query(..., description="Pinterest board URL"),
     limit: int = Query(default=20, ge=1, le=200),
-    service: PinterestService = Depends(get_service),
-) -> PinterestScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> PinterestResponse:
+    """Get pins from a Pinterest board."""
     try:
-        return await service.scrape_board(url, limit)
+        return await scrape_board(client, url, limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
     "/profile",
-    response_model=PinterestScrapeResponse,
+    response_model=PinterestResponse,
     summary="Scrape profile pins",
 )
-async def scrape_profile(
+async def get_profile_pins(
     url: str = Query(..., description="Pinterest profile URL"),
     limit: int = Query(default=20, ge=1, le=200),
-    service: PinterestService = Depends(get_service),
-) -> PinterestScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> PinterestResponse:
+    """Get pins from a Pinterest profile."""
     try:
-        return await service.scrape_profile(url, limit)
+        return await scrape_profile(client, url, limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
     "/search",
-    response_model=PinterestScrapeResponse,
+    response_model=PinterestResponse,
     summary="Search Pinterest",
 )
-async def search(
+async def search_pinterest(
     q: str = Query(..., min_length=1),
     limit: int = Query(default=20, ge=1, le=200),
-    service: PinterestService = Depends(get_service),
-) -> PinterestScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> PinterestResponse:
+    """Search Pinterest pins."""
     try:
-        return await service.search(q, limit)
+        return await search(client, q, limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
     "/pin",
-    response_model=PinterestScrapeResponse,
-    summary="Scrape specific pin",
+    response_model=PinterestResponse,
+    summary="Get pin details",
 )
-async def scrape_pin(
+async def get_pin_details(
     url: str = Query(..., description="Pinterest pin URL"),
-    service: PinterestService = Depends(get_service),
-) -> PinterestScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> PinterestResponse:
+    """Get Pinterest pin details."""
     try:
-        return await service.scrape_pin(url)
+        return await get_pin(client, url)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

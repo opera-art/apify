@@ -5,105 +5,79 @@ from apify_client import ApifyClient
 
 from src.services.apify_client import get_apify_client
 from src.services.platforms.threads import (
-    ThreadsService,
-    ThreadsScrapeRequest,
-    ThreadsScrapeResponse,
+    ThreadsResponse,
+    scrape_profile,
+    scrape_hashtag,
+    search,
+    get_thread,
 )
 
 router = APIRouter(prefix="/threads", tags=["Threads"])
 
 
-def get_service(client: ApifyClient = Depends(get_apify_client)) -> ThreadsService:
-    return ThreadsService(client)
-
-
-@router.post(
-    "/scrape",
-    response_model=ThreadsScrapeResponse,
-    summary="Scrape Threads data",
-    description="""
-    Scrape Threads posts and profiles.
-
-    **Options:**
-    - `usernames`: List of usernames (without @)
-    - `threadUrls`: Direct thread URLs
-    - `searchQueries`: Search terms
-    - `hashtags`: Hashtags (without #)
-
-    At least one option must be provided.
-    """,
-)
-async def scrape(
-    request: ThreadsScrapeRequest,
-    service: ThreadsService = Depends(get_service),
-) -> ThreadsScrapeResponse:
-    try:
-        return await service.scrape(request)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 @router.get(
     "/profile/{username}",
-    response_model=ThreadsScrapeResponse,
+    response_model=ThreadsResponse,
     summary="Scrape profile threads",
 )
-async def scrape_profile(
+async def get_profile_threads(
     username: str,
     limit: int = Query(default=20, ge=1, le=100),
-    service: ThreadsService = Depends(get_service),
-) -> ThreadsScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> ThreadsResponse:
+    """Get threads from a user profile."""
     try:
-        return await service.scrape_profile(username, limit)
+        return await scrape_profile(client, username, limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
     "/hashtag/{hashtag}",
-    response_model=ThreadsScrapeResponse,
+    response_model=ThreadsResponse,
     summary="Scrape by hashtag",
 )
-async def scrape_hashtag(
+async def get_hashtag_threads(
     hashtag: str,
     limit: int = Query(default=20, ge=1, le=100),
-    service: ThreadsService = Depends(get_service),
-) -> ThreadsScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> ThreadsResponse:
+    """Get threads by hashtag."""
     try:
-        return await service.scrape_hashtag(hashtag, limit)
+        return await scrape_hashtag(client, hashtag, limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
     "/search",
-    response_model=ThreadsScrapeResponse,
+    response_model=ThreadsResponse,
     summary="Search Threads",
 )
-async def search(
+async def search_threads(
     q: str = Query(..., min_length=1),
     limit: int = Query(default=20, ge=1, le=100),
-    service: ThreadsService = Depends(get_service),
-) -> ThreadsScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> ThreadsResponse:
+    """Search Threads."""
     try:
-        return await service.search(q, limit)
+        return await search(client, q, limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
     "/thread",
-    response_model=ThreadsScrapeResponse,
-    summary="Scrape specific thread",
+    response_model=ThreadsResponse,
+    summary="Get thread details",
 )
-async def scrape_thread(
+async def get_thread_details(
     url: str = Query(..., description="Threads post URL"),
-    include_replies: bool = Query(default=False),
-    service: ThreadsService = Depends(get_service),
-) -> ThreadsScrapeResponse:
+    include_replies: bool = Query(default=False, alias="includeReplies"),
+    client: ApifyClient = Depends(get_apify_client),
+) -> ThreadsResponse:
+    """Get thread details by URL."""
     try:
-        return await service.scrape_thread(url, include_replies)
+        return await get_thread(client, url, include_replies)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

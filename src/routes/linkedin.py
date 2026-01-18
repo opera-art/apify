@@ -5,88 +5,65 @@ from apify_client import ApifyClient
 
 from src.services.apify_client import get_apify_client
 from src.services.platforms.linkedin import (
-    LinkedInService,
-    LinkedInScrapeRequest,
-    LinkedInScrapeResponse,
+    LinkedInResponse,
+    scrape_profile_posts,
+    scrape_company_posts,
+    search_posts,
 )
 
 router = APIRouter(prefix="/linkedin", tags=["LinkedIn"])
 
 
-def get_service(client: ApifyClient = Depends(get_apify_client)) -> LinkedInService:
-    return LinkedInService(client)
-
-
-@router.post(
-    "/scrape",
-    response_model=LinkedInScrapeResponse,
-    summary="Scrape LinkedIn data",
-    description="""
-    Scrape LinkedIn posts from profiles and companies.
-
-    **Options:**
-    - `profileUrls`: LinkedIn profile URLs
-    - `companyUrls`: Company page URLs
-    - `searchQueries`: Search terms
-
-    At least one option must be provided.
-    """,
-)
-async def scrape(
-    request: LinkedInScrapeRequest,
-    service: LinkedInService = Depends(get_service),
-) -> LinkedInScrapeResponse:
-    try:
-        return await service.scrape(request)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 @router.get(
     "/profile",
-    response_model=LinkedInScrapeResponse,
+    response_model=LinkedInResponse,
     summary="Scrape profile posts",
 )
-async def scrape_profile_posts(
+async def get_profile_posts(
     url: str = Query(..., description="LinkedIn profile URL"),
     limit: int = Query(default=20, ge=1, le=100),
-    service: LinkedInService = Depends(get_service),
-) -> LinkedInScrapeResponse:
+    include_comments: bool = Query(default=False, alias="includeComments"),
+    include_reactions: bool = Query(default=True, alias="includeReactions"),
+    client: ApifyClient = Depends(get_apify_client),
+) -> LinkedInResponse:
+    """Get posts from a LinkedIn profile."""
     try:
-        return await service.scrape_profile_posts(url, limit)
+        return await scrape_profile_posts(client, url, limit, include_comments, include_reactions)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
     "/company",
-    response_model=LinkedInScrapeResponse,
+    response_model=LinkedInResponse,
     summary="Scrape company posts",
 )
-async def scrape_company_posts(
+async def get_company_posts(
     url: str = Query(..., description="LinkedIn company URL"),
     limit: int = Query(default=20, ge=1, le=100),
-    service: LinkedInService = Depends(get_service),
-) -> LinkedInScrapeResponse:
+    include_comments: bool = Query(default=False, alias="includeComments"),
+    include_reactions: bool = Query(default=True, alias="includeReactions"),
+    client: ApifyClient = Depends(get_apify_client),
+) -> LinkedInResponse:
+    """Get posts from a LinkedIn company page."""
     try:
-        return await service.scrape_company_posts(url, limit)
+        return await scrape_company_posts(client, url, limit, include_comments, include_reactions)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
     "/search",
-    response_model=LinkedInScrapeResponse,
+    response_model=LinkedInResponse,
     summary="Search LinkedIn posts",
 )
-async def search_posts(
+async def search_linkedin_posts(
     q: str = Query(..., min_length=1),
     limit: int = Query(default=20, ge=1, le=100),
-    service: LinkedInService = Depends(get_service),
-) -> LinkedInScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> LinkedInResponse:
+    """Search LinkedIn posts."""
     try:
-        return await service.search_posts(q, limit)
+        return await search_posts(client, q, limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

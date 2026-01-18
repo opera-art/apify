@@ -16,23 +16,40 @@ from apify_client import ApifyClient
 
 from src.services.apify_client import get_apify_client
 from src.services.platforms.instagram import (
-    InstagramService,
-    InstagramScrapeResponse,
-    InstagramSearchType,
+    InstagramResponse,
+    # Profile
     InstagramProfileRequest,
+    scrape_profiles,
+    get_profile,
+    # Posts
     InstagramPostsRequest,
+    scrape_posts,
+    get_user_posts,
+    # Comments
     InstagramCommentsRequest,
+    scrape_comments,
+    get_post_comments,
+    # Hashtag
     InstagramHashtagRequest,
+    scrape_hashtag,
+    get_hashtag_posts,
+    # Reels
     InstagramReelsRequest,
-    InstagramSearchRequest,
+    scrape_reels,
+    get_user_reels,
+    # Post Details
     InstagramPostDetailRequest,
+    scrape_post_details,
+    get_post_details,
+    # Search
+    InstagramSearchRequest,
+    search,
+    search_users,
+    search_hashtags,
+    search_places,
 )
 
 router = APIRouter(prefix="/instagram", tags=["Instagram"])
-
-
-def get_service(client: ApifyClient = Depends(get_apify_client)) -> InstagramService:
-    return InstagramService(client)
 
 
 # =============================================================================
@@ -41,32 +58,32 @@ def get_service(client: ApifyClient = Depends(get_apify_client)) -> InstagramSer
 
 @router.get(
     "/profile/{username}",
-    response_model=InstagramScrapeResponse,
+    response_model=InstagramResponse,
     summary="Get profile metadata",
     description="Get Instagram profile metadata: bio, followers, following, posts count, etc.",
 )
-async def get_profile(
+async def get_profile_route(
     username: str,
-    service: InstagramService = Depends(get_service),
-) -> InstagramScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> InstagramResponse:
     try:
-        return await service.get_profile(username)
+        return await get_profile(client, username)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post(
     "/profiles",
-    response_model=InstagramScrapeResponse,
+    response_model=InstagramResponse,
     summary="Get multiple profiles metadata",
     description="Get metadata for multiple Instagram profiles at once.",
 )
-async def scrape_profiles(
+async def scrape_profiles_route(
     request: InstagramProfileRequest,
-    service: InstagramService = Depends(get_service),
-) -> InstagramScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> InstagramResponse:
     try:
-        return await service.scrape_profiles(request)
+        return await scrape_profiles(client, request)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -77,33 +94,33 @@ async def scrape_profiles(
 
 @router.get(
     "/posts/{username}",
-    response_model=InstagramScrapeResponse,
+    response_model=InstagramResponse,
     summary="Get user posts",
     description="Get posts from a specific Instagram user.",
 )
-async def get_user_posts(
+async def get_user_posts_route(
     username: str,
     limit: int = Query(default=20, ge=1, le=200),
-    service: InstagramService = Depends(get_service),
-) -> InstagramScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> InstagramResponse:
     try:
-        return await service.get_user_posts(username, limit)
+        return await get_user_posts(client, username, limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post(
     "/posts",
-    response_model=InstagramScrapeResponse,
+    response_model=InstagramResponse,
     summary="Get posts from multiple profiles",
     description="Get posts from multiple Instagram profiles at once.",
 )
-async def scrape_posts(
+async def scrape_posts_route(
     request: InstagramPostsRequest,
-    service: InstagramService = Depends(get_service),
-) -> InstagramScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> InstagramResponse:
     try:
-        return await service.scrape_posts(request)
+        return await scrape_posts(client, request)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -116,33 +133,33 @@ async def scrape_posts(
 
 @router.get(
     "/comments",
-    response_model=InstagramScrapeResponse,
+    response_model=InstagramResponse,
     summary="Get post comments",
     description="Get comments from a specific Instagram post.",
 )
-async def get_post_comments(
+async def get_post_comments_route(
     url: str = Query(..., description="Instagram post URL"),
     limit: int = Query(default=100, ge=1, le=1000),
-    service: InstagramService = Depends(get_service),
-) -> InstagramScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> InstagramResponse:
     try:
-        return await service.get_post_comments(url, limit)
+        return await get_post_comments(client, url, limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post(
     "/comments",
-    response_model=InstagramScrapeResponse,
+    response_model=InstagramResponse,
     summary="Get comments from multiple posts",
     description="Get comments from multiple Instagram posts at once.",
 )
-async def scrape_comments(
+async def scrape_comments_route(
     request: InstagramCommentsRequest,
-    service: InstagramService = Depends(get_service),
-) -> InstagramScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> InstagramResponse:
     try:
-        return await service.scrape_comments(request)
+        return await scrape_comments(client, request)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -153,33 +170,33 @@ async def scrape_comments(
 
 @router.get(
     "/hashtag/{hashtag}",
-    response_model=InstagramScrapeResponse,
+    response_model=InstagramResponse,
     summary="Get hashtag posts",
     description="Get posts from a specific hashtag.",
 )
-async def get_hashtag_posts(
+async def get_hashtag_posts_route(
     hashtag: str,
     limit: int = Query(default=20, ge=1, le=200),
-    service: InstagramService = Depends(get_service),
-) -> InstagramScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> InstagramResponse:
     try:
-        return await service.get_hashtag_posts(hashtag, limit)
+        return await get_hashtag_posts(client, hashtag, limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post(
     "/hashtags",
-    response_model=InstagramScrapeResponse,
+    response_model=InstagramResponse,
     summary="Get posts from multiple hashtags",
     description="Get posts from multiple hashtags at once.",
 )
-async def scrape_hashtags(
+async def scrape_hashtags_route(
     request: InstagramHashtagRequest,
-    service: InstagramService = Depends(get_service),
-) -> InstagramScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> InstagramResponse:
     try:
-        return await service.scrape_hashtag(request)
+        return await scrape_hashtag(client, request)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -190,33 +207,33 @@ async def scrape_hashtags(
 
 @router.get(
     "/reels/{username}",
-    response_model=InstagramScrapeResponse,
+    response_model=InstagramResponse,
     summary="Get user reels",
     description="Get reels from a specific Instagram user.",
 )
-async def get_user_reels(
+async def get_user_reels_route(
     username: str,
     limit: int = Query(default=20, ge=1, le=200),
-    service: InstagramService = Depends(get_service),
-) -> InstagramScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> InstagramResponse:
     try:
-        return await service.get_user_reels(username, limit)
+        return await get_user_reels(client, username, limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post(
     "/reels",
-    response_model=InstagramScrapeResponse,
+    response_model=InstagramResponse,
     summary="Get reels from multiple profiles",
     description="Get reels from multiple Instagram profiles at once.",
 )
-async def scrape_reels(
+async def scrape_reels_route(
     request: InstagramReelsRequest,
-    service: InstagramService = Depends(get_service),
-) -> InstagramScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> InstagramResponse:
     try:
-        return await service.scrape_reels(request)
+        return await scrape_reels(client, request)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -229,32 +246,32 @@ async def scrape_reels(
 
 @router.get(
     "/post-details",
-    response_model=InstagramScrapeResponse,
+    response_model=InstagramResponse,
     summary="Get post details",
     description="Get detailed information about a specific Instagram post.",
 )
-async def get_post_details(
+async def get_post_details_route(
     url: str = Query(..., description="Instagram post URL"),
-    service: InstagramService = Depends(get_service),
-) -> InstagramScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> InstagramResponse:
     try:
-        return await service.get_post_details(url)
+        return await get_post_details(client, url)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post(
     "/post-details",
-    response_model=InstagramScrapeResponse,
+    response_model=InstagramResponse,
     summary="Get details from multiple posts",
     description="Get detailed information about multiple Instagram posts at once.",
 )
-async def scrape_post_details(
+async def scrape_post_details_route(
     request: InstagramPostDetailRequest,
-    service: InstagramService = Depends(get_service),
-) -> InstagramScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> InstagramResponse:
     try:
-        return await service.scrape_post_details(request)
+        return await scrape_post_details(client, request)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -265,66 +282,66 @@ async def scrape_post_details(
 
 @router.get(
     "/search/users",
-    response_model=InstagramScrapeResponse,
+    response_model=InstagramResponse,
     summary="Search users",
     description="Search for Instagram users by name/username.",
 )
-async def search_users(
+async def search_users_route(
     q: str = Query(..., min_length=1),
     limit: int = Query(default=10, ge=1, le=100),
-    service: InstagramService = Depends(get_service),
-) -> InstagramScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> InstagramResponse:
     try:
-        return await service.search_users(q, limit)
+        return await search_users(client, q, limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
     "/search/hashtags",
-    response_model=InstagramScrapeResponse,
+    response_model=InstagramResponse,
     summary="Search hashtags",
     description="Search for Instagram hashtags.",
 )
-async def search_hashtags(
+async def search_hashtags_route(
     q: str = Query(..., min_length=1),
     limit: int = Query(default=10, ge=1, le=100),
-    service: InstagramService = Depends(get_service),
-) -> InstagramScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> InstagramResponse:
     try:
-        return await service.search_hashtags(q, limit)
+        return await search_hashtags(client, q, limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
     "/search/places",
-    response_model=InstagramScrapeResponse,
+    response_model=InstagramResponse,
     summary="Search places",
     description="Search for Instagram places/locations.",
 )
-async def search_places(
+async def search_places_route(
     q: str = Query(..., min_length=1),
     limit: int = Query(default=10, ge=1, le=100),
-    service: InstagramService = Depends(get_service),
-) -> InstagramScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> InstagramResponse:
     try:
-        return await service.search_places(q, limit)
+        return await search_places(client, q, limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post(
     "/search",
-    response_model=InstagramScrapeResponse,
+    response_model=InstagramResponse,
     summary="Search Instagram",
     description="Search Instagram for users, hashtags, or places.",
 )
-async def search(
+async def search_route(
     request: InstagramSearchRequest,
-    service: InstagramService = Depends(get_service),
-) -> InstagramScrapeResponse:
+    client: ApifyClient = Depends(get_apify_client),
+) -> InstagramResponse:
     try:
-        return await service.search(request)
+        return await search(client, request)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

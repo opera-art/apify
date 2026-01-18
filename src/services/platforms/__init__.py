@@ -14,79 +14,7 @@ Supported Platforms:
 - Pinterest
 """
 
-from typing import Literal, Union
-from apify_client import ApifyClient
-
-# Import all platform modules
-from .tiktok import (
-    TikTokService,
-    TikTokScrapeRequest,
-    TikTokScrapeResponse,
-    TikTokSearchType,
-    TikTokSortType,
-    TIKTOK_ACTOR_ID,
-    validate_tiktok_request,
-    build_tiktok_actor_input,
-)
-
-from .instagram import (
-    InstagramService,
-    InstagramScrapeRequest,
-    InstagramScrapeResponse,
-    InstagramSearchType,
-    InstagramResultsType,
-    INSTAGRAM_ACTOR_ID,
-    validate_instagram_request,
-    build_instagram_actor_input,
-)
-
-from .youtube import (
-    YouTubeService,
-    YouTubeScrapeRequest,
-    YouTubeScrapeResponse,
-    YOUTUBE_ACTOR_ID,
-    validate_youtube_request,
-    build_youtube_actor_input,
-)
-
-from .meta_ads import (
-    MetaAdsService,
-    MetaAdsScrapeRequest,
-    MetaAdsScrapeResponse,
-    META_ADS_ACTOR_ID,
-    META_ADS_COUNTRIES,
-    META_ADS_TYPES,
-    validate_meta_ads_request,
-    build_meta_ads_actor_input,
-)
-
-from .threads import (
-    ThreadsService,
-    ThreadsScrapeRequest,
-    ThreadsScrapeResponse,
-    THREADS_ACTOR_ID,
-    validate_threads_request,
-    build_threads_actor_input,
-)
-
-from .linkedin import (
-    LinkedInService,
-    LinkedInScrapeRequest,
-    LinkedInScrapeResponse,
-    LINKEDIN_ACTOR_ID,
-    validate_linkedin_request,
-    build_linkedin_actor_input,
-)
-
-from .pinterest import (
-    PinterestService,
-    PinterestScrapeRequest,
-    PinterestScrapeResponse,
-    PINTEREST_ACTOR_ID,
-    validate_pinterest_request,
-    build_pinterest_actor_input,
-)
-
+from typing import Literal
 
 # =============================================================================
 # PLATFORM TYPE DEFINITIONS
@@ -112,7 +40,124 @@ SUPPORTED_PLATFORMS: list[Platform] = [
     "pinterest",
 ]
 
-# Mapping of platform names to their Actor IDs
+# =============================================================================
+# TIKTOK IMPORTS
+# =============================================================================
+
+from .tiktok import (
+    TIKTOK_ACTOR_ID,
+    TIKTOK_DEFAULT_RESULTS,
+    TikTokResponse,
+    TikTokSearchType,
+    TikTokSortType,
+    scrape_hashtag as tiktok_scrape_hashtag,
+    scrape_profile as tiktok_scrape_profile,
+    search as tiktok_search,
+    get_video as tiktok_get_video,
+)
+
+# =============================================================================
+# INSTAGRAM IMPORTS
+# =============================================================================
+
+from .instagram import (
+    INSTAGRAM_ACTOR_ID,
+    INSTAGRAM_DEFAULT_RESULTS,
+    InstagramResponse,
+    InstagramSearchType,
+    InstagramResultsType,
+    get_profile as instagram_get_profile,
+    scrape_profiles as instagram_scrape_profiles,
+    get_user_posts as instagram_get_user_posts,
+    scrape_posts as instagram_scrape_posts,
+    get_post_comments as instagram_get_post_comments,
+    scrape_comments as instagram_scrape_comments,
+    get_hashtag_posts as instagram_get_hashtag_posts,
+    scrape_hashtag as instagram_scrape_hashtag,
+    get_user_reels as instagram_get_user_reels,
+    scrape_reels as instagram_scrape_reels,
+    get_post_details as instagram_get_post_details,
+    scrape_post_details as instagram_scrape_post_details,
+    search as instagram_search,
+    search_users as instagram_search_users,
+    search_hashtags as instagram_search_hashtags,
+    search_places as instagram_search_places,
+)
+
+# =============================================================================
+# YOUTUBE IMPORTS
+# =============================================================================
+
+from .youtube import (
+    YOUTUBE_ACTOR_ID,
+    YOUTUBE_DEFAULT_RESULTS,
+    YouTubeResponse,
+    search as youtube_search,
+    scrape_channel as youtube_scrape_channel,
+    get_video as youtube_get_video,
+    scrape_playlist as youtube_scrape_playlist,
+)
+
+# =============================================================================
+# META ADS IMPORTS
+# =============================================================================
+
+from .meta_ads import (
+    META_ADS_ACTOR_ID,
+    META_ADS_DEFAULT_RESULTS,
+    META_ADS_COUNTRIES,
+    META_ADS_TYPES,
+    MetaAdsResponse,
+    scrape_page_ads as meta_ads_scrape_page_ads,
+    search_ads as meta_ads_search_ads,
+    scrape_political_ads as meta_ads_scrape_political_ads,
+)
+
+# =============================================================================
+# THREADS IMPORTS
+# =============================================================================
+
+from .threads import (
+    THREADS_ACTOR_ID,
+    THREADS_DEFAULT_RESULTS,
+    ThreadsResponse,
+    scrape_profile as threads_scrape_profile,
+    scrape_hashtag as threads_scrape_hashtag,
+    search as threads_search,
+    get_thread as threads_get_thread,
+)
+
+# =============================================================================
+# LINKEDIN IMPORTS
+# =============================================================================
+
+from .linkedin import (
+    LINKEDIN_ACTOR_ID,
+    LINKEDIN_DEFAULT_RESULTS,
+    LinkedInResponse,
+    scrape_profile_posts as linkedin_scrape_profile_posts,
+    scrape_company_posts as linkedin_scrape_company_posts,
+    search_posts as linkedin_search_posts,
+)
+
+# =============================================================================
+# PINTEREST IMPORTS
+# =============================================================================
+
+from .pinterest import (
+    PINTEREST_ACTOR_ID,
+    PINTEREST_DEFAULT_RESULTS,
+    PinterestResponse,
+    scrape_board as pinterest_scrape_board,
+    scrape_profile as pinterest_scrape_profile,
+    search as pinterest_search,
+    get_pin as pinterest_get_pin,
+)
+
+# =============================================================================
+# PLATFORM ACTORS MAPPING
+# =============================================================================
+
 PLATFORM_ACTORS: dict[Platform, str] = {
     "tiktok": TIKTOK_ACTOR_ID,
     "instagram": INSTAGRAM_ACTOR_ID,
@@ -123,74 +168,6 @@ PLATFORM_ACTORS: dict[Platform, str] = {
     "pinterest": PINTEREST_ACTOR_ID,
 }
 
-# Union type for all request types
-PlatformScrapeRequest = Union[
-    TikTokScrapeRequest,
-    InstagramScrapeRequest,
-    YouTubeScrapeRequest,
-    MetaAdsScrapeRequest,
-    ThreadsScrapeRequest,
-    LinkedInScrapeRequest,
-    PinterestScrapeRequest,
-]
-
-# Union type for all response types
-PlatformScrapeResponse = Union[
-    TikTokScrapeResponse,
-    InstagramScrapeResponse,
-    YouTubeScrapeResponse,
-    MetaAdsScrapeResponse,
-    ThreadsScrapeResponse,
-    LinkedInScrapeResponse,
-    PinterestScrapeResponse,
-]
-
-# Union type for all service types
-PlatformService = Union[
-    TikTokService,
-    InstagramService,
-    YouTubeService,
-    MetaAdsService,
-    ThreadsService,
-    LinkedInService,
-    PinterestService,
-]
-
-
-# =============================================================================
-# SERVICE FACTORY
-# =============================================================================
-
-def get_platform_service(platform: Platform, client: ApifyClient) -> PlatformService:
-    """
-    Factory function to get the appropriate service for a platform.
-
-    Args:
-        platform: The platform identifier
-        client: Configured ApifyClient instance
-
-    Returns:
-        The appropriate platform service instance
-
-    Raises:
-        ValueError: If platform is not supported
-    """
-    services: dict[Platform, type] = {
-        "tiktok": TikTokService,
-        "instagram": InstagramService,
-        "youtube": YouTubeService,
-        "meta_ads": MetaAdsService,
-        "threads": ThreadsService,
-        "linkedin": LinkedInService,
-        "pinterest": PinterestService,
-    }
-
-    if platform not in services:
-        raise ValueError(f"Unsupported platform: {platform}. Supported: {SUPPORTED_PLATFORMS}")
-
-    return services[platform](client)
-
-
 # =============================================================================
 # EXPORTS
 # =============================================================================
@@ -200,65 +177,76 @@ __all__ = [
     "Platform",
     "SUPPORTED_PLATFORMS",
     "PLATFORM_ACTORS",
-    # Union types
-    "PlatformScrapeRequest",
-    "PlatformScrapeResponse",
-    "PlatformService",
-    # Factory
-    "get_platform_service",
     # TikTok
-    "TikTokService",
-    "TikTokScrapeRequest",
-    "TikTokScrapeResponse",
+    "TIKTOK_ACTOR_ID",
+    "TIKTOK_DEFAULT_RESULTS",
+    "TikTokResponse",
     "TikTokSearchType",
     "TikTokSortType",
-    "TIKTOK_ACTOR_ID",
-    "validate_tiktok_request",
-    "build_tiktok_actor_input",
+    "tiktok_scrape_hashtag",
+    "tiktok_scrape_profile",
+    "tiktok_search",
+    "tiktok_get_video",
     # Instagram
-    "InstagramService",
-    "InstagramScrapeRequest",
-    "InstagramScrapeResponse",
+    "INSTAGRAM_ACTOR_ID",
+    "INSTAGRAM_DEFAULT_RESULTS",
+    "InstagramResponse",
     "InstagramSearchType",
     "InstagramResultsType",
-    "INSTAGRAM_ACTOR_ID",
-    "validate_instagram_request",
-    "build_instagram_actor_input",
+    "instagram_get_profile",
+    "instagram_scrape_profiles",
+    "instagram_get_user_posts",
+    "instagram_scrape_posts",
+    "instagram_get_post_comments",
+    "instagram_scrape_comments",
+    "instagram_get_hashtag_posts",
+    "instagram_scrape_hashtag",
+    "instagram_get_user_reels",
+    "instagram_scrape_reels",
+    "instagram_get_post_details",
+    "instagram_scrape_post_details",
+    "instagram_search",
+    "instagram_search_users",
+    "instagram_search_hashtags",
+    "instagram_search_places",
     # YouTube
-    "YouTubeService",
-    "YouTubeScrapeRequest",
-    "YouTubeScrapeResponse",
     "YOUTUBE_ACTOR_ID",
-    "validate_youtube_request",
-    "build_youtube_actor_input",
+    "YOUTUBE_DEFAULT_RESULTS",
+    "YouTubeResponse",
+    "youtube_search",
+    "youtube_scrape_channel",
+    "youtube_get_video",
+    "youtube_scrape_playlist",
     # Meta Ads
-    "MetaAdsService",
-    "MetaAdsScrapeRequest",
-    "MetaAdsScrapeResponse",
     "META_ADS_ACTOR_ID",
+    "META_ADS_DEFAULT_RESULTS",
     "META_ADS_COUNTRIES",
     "META_ADS_TYPES",
-    "validate_meta_ads_request",
-    "build_meta_ads_actor_input",
+    "MetaAdsResponse",
+    "meta_ads_scrape_page_ads",
+    "meta_ads_search_ads",
+    "meta_ads_scrape_political_ads",
     # Threads
-    "ThreadsService",
-    "ThreadsScrapeRequest",
-    "ThreadsScrapeResponse",
     "THREADS_ACTOR_ID",
-    "validate_threads_request",
-    "build_threads_actor_input",
+    "THREADS_DEFAULT_RESULTS",
+    "ThreadsResponse",
+    "threads_scrape_profile",
+    "threads_scrape_hashtag",
+    "threads_search",
+    "threads_get_thread",
     # LinkedIn
-    "LinkedInService",
-    "LinkedInScrapeRequest",
-    "LinkedInScrapeResponse",
     "LINKEDIN_ACTOR_ID",
-    "validate_linkedin_request",
-    "build_linkedin_actor_input",
+    "LINKEDIN_DEFAULT_RESULTS",
+    "LinkedInResponse",
+    "linkedin_scrape_profile_posts",
+    "linkedin_scrape_company_posts",
+    "linkedin_search_posts",
     # Pinterest
-    "PinterestService",
-    "PinterestScrapeRequest",
-    "PinterestScrapeResponse",
     "PINTEREST_ACTOR_ID",
-    "validate_pinterest_request",
-    "build_pinterest_actor_input",
+    "PINTEREST_DEFAULT_RESULTS",
+    "PinterestResponse",
+    "pinterest_scrape_board",
+    "pinterest_scrape_profile",
+    "pinterest_search",
+    "pinterest_get_pin",
 ]
