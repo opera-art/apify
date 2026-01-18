@@ -9,6 +9,7 @@ from src.routes import (
     threads,
     linkedin,
     pinterest,
+    jobs,
 )
 
 app = FastAPI(
@@ -57,6 +58,7 @@ app.include_router(meta_ads.router, prefix="/api/v1")
 app.include_router(threads.router, prefix="/api/v1")
 app.include_router(linkedin.router, prefix="/api/v1")
 app.include_router(pinterest.router, prefix="/api/v1")
+app.include_router(jobs.router, prefix="/api/v1")
 
 
 @app.get("/", tags=["Health"])
