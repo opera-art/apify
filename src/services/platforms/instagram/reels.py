@@ -57,7 +57,7 @@ def build_reels_input(request: InstagramReelsRequest) -> dict:
     }
 
 
-async def scrape_reels(
+def scrape_reels(
     client: ApifyClient,
     request: InstagramReelsRequest,
 ) -> InstagramResponse:
@@ -70,11 +70,11 @@ async def scrape_reels(
     return run_actor(client, INSTAGRAM_ACTOR_ID, actor_input)
 
 
-async def get_user_reels(
+def get_user_reels(
     client: ApifyClient,
     username: str,
     limit: int = INSTAGRAM_DEFAULT_RESULTS,
 ) -> InstagramResponse:
     """Get reels from a single user."""
     request = InstagramReelsRequest(usernames=[username], results_limit=limit)
-    return await scrape_reels(client, request)
+    return scrape_reels(client, request)

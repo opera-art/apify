@@ -55,7 +55,7 @@ def build_posts_input(request: InstagramPostsRequest) -> dict:
     }
 
 
-async def scrape_posts(
+def scrape_posts(
     client: ApifyClient,
     request: InstagramPostsRequest,
 ) -> InstagramResponse:
@@ -68,11 +68,11 @@ async def scrape_posts(
     return run_actor(client, INSTAGRAM_ACTOR_ID, actor_input)
 
 
-async def get_user_posts(
+def get_user_posts(
     client: ApifyClient,
     username: str,
     limit: int = INSTAGRAM_DEFAULT_RESULTS,
 ) -> InstagramResponse:
     """Get posts from a single user."""
     request = InstagramPostsRequest(usernames=[username], results_limit=limit)
-    return await scrape_posts(client, request)
+    return scrape_posts(client, request)

@@ -29,7 +29,7 @@ def build_profile_input(request: InstagramProfileRequest) -> dict:
     }
 
 
-async def scrape_profiles(
+def scrape_profiles(
     client: ApifyClient,
     request: InstagramProfileRequest,
 ) -> InstagramResponse:
@@ -42,10 +42,10 @@ async def scrape_profiles(
     return run_actor(client, INSTAGRAM_PROFILE_ACTOR_ID, actor_input)
 
 
-async def get_profile(
+def get_profile(
     client: ApifyClient,
     username: str,
 ) -> InstagramResponse:
     """Get a single profile's metadata."""
     request = InstagramProfileRequest(usernames=[username])
-    return await scrape_profiles(client, request)
+    return scrape_profiles(client, request)

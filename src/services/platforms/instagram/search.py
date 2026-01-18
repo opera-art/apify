@@ -44,7 +44,7 @@ def build_search_input(request: InstagramSearchRequest) -> dict:
     }
 
 
-async def search(
+def search(
     client: ApifyClient,
     request: InstagramSearchRequest,
 ) -> InstagramResponse:
@@ -57,7 +57,7 @@ async def search(
     return run_actor(client, INSTAGRAM_ACTOR_ID, actor_input)
 
 
-async def search_users(
+def search_users(
     client: ApifyClient,
     query: str,
     limit: int = 10,
@@ -68,10 +68,10 @@ async def search_users(
         search_type=InstagramSearchType.USER,
         results_limit=limit,
     )
-    return await search(client, request)
+    return search(client, request)
 
 
-async def search_hashtags(
+def search_hashtags(
     client: ApifyClient,
     query: str,
     limit: int = 10,
@@ -82,10 +82,10 @@ async def search_hashtags(
         search_type=InstagramSearchType.HASHTAG,
         results_limit=limit,
     )
-    return await search(client, request)
+    return search(client, request)
 
 
-async def search_places(
+def search_places(
     client: ApifyClient,
     query: str,
     limit: int = 10,
@@ -96,4 +96,4 @@ async def search_places(
         search_type=InstagramSearchType.PLACE,
         results_limit=limit,
     )
-    return await search(client, request)
+    return search(client, request)

@@ -39,7 +39,7 @@ def build_comments_input(request: InstagramCommentsRequest) -> dict:
     }
 
 
-async def scrape_comments(
+def scrape_comments(
     client: ApifyClient,
     request: InstagramCommentsRequest,
 ) -> InstagramResponse:
@@ -52,11 +52,11 @@ async def scrape_comments(
     return run_actor(client, INSTAGRAM_ACTOR_ID, actor_input)
 
 
-async def get_post_comments(
+def get_post_comments(
     client: ApifyClient,
     post_url: str,
     limit: int = 100,
 ) -> InstagramResponse:
     """Get comments from a single post."""
     request = InstagramCommentsRequest(post_urls=[post_url], results_limit=limit)
-    return await scrape_comments(client, request)
+    return scrape_comments(client, request)

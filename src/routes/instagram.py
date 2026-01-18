@@ -62,12 +62,12 @@ router = APIRouter(prefix="/instagram", tags=["Instagram"])
     summary="Get profile metadata",
     description="Get Instagram profile metadata: bio, followers, following, posts count, etc.",
 )
-async def get_profile_route(
+def get_profile_route(
     username: str,
     client: ApifyClient = Depends(get_apify_client),
 ) -> InstagramResponse:
     try:
-        return await get_profile(client, username)
+        return get_profile(client, username)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -78,12 +78,12 @@ async def get_profile_route(
     summary="Get multiple profiles metadata",
     description="Get metadata for multiple Instagram profiles at once.",
 )
-async def scrape_profiles_route(
+def scrape_profiles_route(
     request: InstagramProfileRequest,
     client: ApifyClient = Depends(get_apify_client),
 ) -> InstagramResponse:
     try:
-        return await scrape_profiles(client, request)
+        return scrape_profiles(client, request)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -98,13 +98,13 @@ async def scrape_profiles_route(
     summary="Get user posts",
     description="Get posts from a specific Instagram user.",
 )
-async def get_user_posts_route(
+def get_user_posts_route(
     username: str,
     limit: int = Query(default=20, ge=1, le=200),
     client: ApifyClient = Depends(get_apify_client),
 ) -> InstagramResponse:
     try:
-        return await get_user_posts(client, username, limit)
+        return get_user_posts(client, username, limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -115,12 +115,12 @@ async def get_user_posts_route(
     summary="Get posts from multiple profiles",
     description="Get posts from multiple Instagram profiles at once.",
 )
-async def scrape_posts_route(
+def scrape_posts_route(
     request: InstagramPostsRequest,
     client: ApifyClient = Depends(get_apify_client),
 ) -> InstagramResponse:
     try:
-        return await scrape_posts(client, request)
+        return scrape_posts(client, request)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -137,13 +137,13 @@ async def scrape_posts_route(
     summary="Get post comments",
     description="Get comments from a specific Instagram post.",
 )
-async def get_post_comments_route(
+def get_post_comments_route(
     url: str = Query(..., description="Instagram post URL"),
     limit: int = Query(default=100, ge=1, le=1000),
     client: ApifyClient = Depends(get_apify_client),
 ) -> InstagramResponse:
     try:
-        return await get_post_comments(client, url, limit)
+        return get_post_comments(client, url, limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -154,12 +154,12 @@ async def get_post_comments_route(
     summary="Get comments from multiple posts",
     description="Get comments from multiple Instagram posts at once.",
 )
-async def scrape_comments_route(
+def scrape_comments_route(
     request: InstagramCommentsRequest,
     client: ApifyClient = Depends(get_apify_client),
 ) -> InstagramResponse:
     try:
-        return await scrape_comments(client, request)
+        return scrape_comments(client, request)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -174,13 +174,13 @@ async def scrape_comments_route(
     summary="Get hashtag posts",
     description="Get posts from a specific hashtag.",
 )
-async def get_hashtag_posts_route(
+def get_hashtag_posts_route(
     hashtag: str,
     limit: int = Query(default=20, ge=1, le=200),
     client: ApifyClient = Depends(get_apify_client),
 ) -> InstagramResponse:
     try:
-        return await get_hashtag_posts(client, hashtag, limit)
+        return get_hashtag_posts(client, hashtag, limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -191,12 +191,12 @@ async def get_hashtag_posts_route(
     summary="Get posts from multiple hashtags",
     description="Get posts from multiple hashtags at once.",
 )
-async def scrape_hashtags_route(
+def scrape_hashtags_route(
     request: InstagramHashtagRequest,
     client: ApifyClient = Depends(get_apify_client),
 ) -> InstagramResponse:
     try:
-        return await scrape_hashtag(client, request)
+        return scrape_hashtag(client, request)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -211,13 +211,13 @@ async def scrape_hashtags_route(
     summary="Get user reels",
     description="Get reels from a specific Instagram user.",
 )
-async def get_user_reels_route(
+def get_user_reels_route(
     username: str,
     limit: int = Query(default=20, ge=1, le=200),
     client: ApifyClient = Depends(get_apify_client),
 ) -> InstagramResponse:
     try:
-        return await get_user_reels(client, username, limit)
+        return get_user_reels(client, username, limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -228,12 +228,12 @@ async def get_user_reels_route(
     summary="Get reels from multiple profiles",
     description="Get reels from multiple Instagram profiles at once.",
 )
-async def scrape_reels_route(
+def scrape_reels_route(
     request: InstagramReelsRequest,
     client: ApifyClient = Depends(get_apify_client),
 ) -> InstagramResponse:
     try:
-        return await scrape_reels(client, request)
+        return scrape_reels(client, request)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -250,12 +250,12 @@ async def scrape_reels_route(
     summary="Get post details",
     description="Get detailed information about a specific Instagram post.",
 )
-async def get_post_details_route(
+def get_post_details_route(
     url: str = Query(..., description="Instagram post URL"),
     client: ApifyClient = Depends(get_apify_client),
 ) -> InstagramResponse:
     try:
-        return await get_post_details(client, url)
+        return get_post_details(client, url)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -266,12 +266,12 @@ async def get_post_details_route(
     summary="Get details from multiple posts",
     description="Get detailed information about multiple Instagram posts at once.",
 )
-async def scrape_post_details_route(
+def scrape_post_details_route(
     request: InstagramPostDetailRequest,
     client: ApifyClient = Depends(get_apify_client),
 ) -> InstagramResponse:
     try:
-        return await scrape_post_details(client, request)
+        return scrape_post_details(client, request)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -286,13 +286,13 @@ async def scrape_post_details_route(
     summary="Search users",
     description="Search for Instagram users by name/username.",
 )
-async def search_users_route(
+def search_users_route(
     q: str = Query(..., min_length=1),
     limit: int = Query(default=10, ge=1, le=100),
     client: ApifyClient = Depends(get_apify_client),
 ) -> InstagramResponse:
     try:
-        return await search_users(client, q, limit)
+        return search_users(client, q, limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -303,13 +303,13 @@ async def search_users_route(
     summary="Search hashtags",
     description="Search for Instagram hashtags.",
 )
-async def search_hashtags_route(
+def search_hashtags_route(
     q: str = Query(..., min_length=1),
     limit: int = Query(default=10, ge=1, le=100),
     client: ApifyClient = Depends(get_apify_client),
 ) -> InstagramResponse:
     try:
-        return await search_hashtags(client, q, limit)
+        return search_hashtags(client, q, limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -320,13 +320,13 @@ async def search_hashtags_route(
     summary="Search places",
     description="Search for Instagram places/locations.",
 )
-async def search_places_route(
+def search_places_route(
     q: str = Query(..., min_length=1),
     limit: int = Query(default=10, ge=1, le=100),
     client: ApifyClient = Depends(get_apify_client),
 ) -> InstagramResponse:
     try:
-        return await search_places(client, q, limit)
+        return search_places(client, q, limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -337,11 +337,11 @@ async def search_places_route(
     summary="Search Instagram",
     description="Search Instagram for users, hashtags, or places.",
 )
-async def search_route(
+def search_route(
     request: InstagramSearchRequest,
     client: ApifyClient = Depends(get_apify_client),
 ) -> InstagramResponse:
     try:
-        return await search(client, request)
+        return search(client, request)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

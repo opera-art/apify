@@ -31,7 +31,7 @@ def build_post_details_input(request: InstagramPostDetailRequest) -> dict:
     }
 
 
-async def scrape_post_details(
+def scrape_post_details(
     client: ApifyClient,
     request: InstagramPostDetailRequest,
 ) -> InstagramResponse:
@@ -44,10 +44,10 @@ async def scrape_post_details(
     return run_actor(client, INSTAGRAM_POST_ACTOR_ID, actor_input)
 
 
-async def get_post_details(
+def get_post_details(
     client: ApifyClient,
     post_url: str,
 ) -> InstagramResponse:
     """Get details of a single post."""
     request = InstagramPostDetailRequest(post_urls=[post_url])
-    return await scrape_post_details(client, request)
+    return scrape_post_details(client, request)

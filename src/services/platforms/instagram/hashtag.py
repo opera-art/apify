@@ -37,7 +37,7 @@ def build_hashtag_input(request: InstagramHashtagRequest) -> dict:
     }
 
 
-async def scrape_hashtag(
+def scrape_hashtag(
     client: ApifyClient,
     request: InstagramHashtagRequest,
 ) -> InstagramResponse:
@@ -50,11 +50,11 @@ async def scrape_hashtag(
     return run_actor(client, INSTAGRAM_HASHTAG_ACTOR_ID, actor_input)
 
 
-async def get_hashtag_posts(
+def get_hashtag_posts(
     client: ApifyClient,
     hashtag: str,
     limit: int = INSTAGRAM_DEFAULT_RESULTS,
 ) -> InstagramResponse:
     """Get posts from a single hashtag."""
     request = InstagramHashtagRequest(hashtags=[hashtag], results_limit=limit)
-    return await scrape_hashtag(client, request)
+    return scrape_hashtag(client, request)
