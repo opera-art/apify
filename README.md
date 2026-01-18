@@ -357,6 +357,314 @@ def submit_job(request: RequestSchema):
 
 ---
 
+## Banco de Dados (Supabase)
+
+Os dados coletados são armazenados no Supabase, no schema `apify`.
+
+### Arquitetura do Schema
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         SCHEMA: apify                                    │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌────────────────────┐                                                 │
+│  │   scraping_jobs    │  ◄── Controle de todos os jobs                  │
+│  └─────────┬──────────┘                                                 │
+│            │                                                             │
+│            ▼                                                             │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │                    TABELAS POR TIPO DE CONTEÚDO                  │    │
+│  ├─────────────────────────────────────────────────────────────────┤    │
+│  │                                                                   │    │
+│  │  ┌──────────────────┐  Perfis de todas as plataformas            │    │
+│  │  │ scraped_profiles │  (IG, TikTok, YT, Threads, LinkedIn, Pinterest) │
+│  │  └──────────────────┘                                             │    │
+│  │                                                                   │    │
+│  │  ┌──────────────────┐  Posts, vídeos, reels, pins, threads       │    │
+│  │  │  scraped_posts   │  (todas plataformas exceto Meta Ads)       │    │
+│  │  └──────────────────┘                                             │    │
+│  │                                                                   │    │
+│  │  ┌──────────────────┐  Comentários                               │    │
+│  │  │ scraped_comments │  (IG, YouTube, LinkedIn, TikTok)           │    │
+│  │  └──────────────────┘                                             │    │
+│  │                                                                   │    │
+│  │  ┌──────────────────┐  Anúncios do Meta Ads Library              │    │
+│  │  │   scraped_ads    │                                             │    │
+│  │  └──────────────────┘                                             │    │
+│  │                                                                   │    │
+│  │  ┌──────────────────┐  Boards do Pinterest                       │    │
+│  │  │  scraped_boards  │                                             │    │
+│  │  └──────────────────┘                                             │    │
+│  │                                                                   │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │                    TABELA DE HISTÓRICO                           │    │
+│  │  ┌────────────────────────┐                                      │    │
+│  │  │ profile_metrics_history │  Evolução de métricas (time-series) │    │
+│  │  └────────────────────────┘                                      │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Tabelas
+
+#### 1. `apify.scraping_jobs` - Controle de Jobs
+
+Registra todos os jobs de scraping executados.
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| `id` | UUID | ID único do job |
+| `clerk_org_id` | TEXT | ID da organização (multi-tenant) |
+| `clerk_user_id` | TEXT | ID do usuário que solicitou |
+| `platform` | TEXT | tiktok, instagram, youtube, meta_ads, threads, linkedin, pinterest |
+| `operation` | TEXT | Tipo de operação (profile, posts, hashtag, search, etc) |
+| `input_params` | JSONB | Parâmetros enviados para o scraping |
+| `status` | TEXT | pending, started, success, failure |
+| `celery_job_id` | TEXT | ID do job no Celery |
+| `apify_run_id` | TEXT | ID do run no Apify |
+| `total_results` | INT | Quantidade de resultados |
+| `credits_used` | INT | Créditos consumidos |
+| `error_message` | TEXT | Mensagem de erro (se falhou) |
+| `created_at` | TIMESTAMPTZ | Data de criação |
+| `started_at` | TIMESTAMPTZ | Data de início |
+| `completed_at` | TIMESTAMPTZ | Data de conclusão |
+
+#### 2. `apify.scraped_profiles` - Perfis Coletados
+
+Perfis de usuários, canais e empresas de todas as plataformas.
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| `id` | UUID | ID único |
+| `job_id` | UUID | FK para scraping_jobs |
+| `clerk_org_id` | TEXT | ID da organização |
+| `platform` | TEXT | Plataforma de origem |
+| `external_id` | TEXT | ID na plataforma original |
+| `username` | TEXT | Nome de usuário |
+| `display_name` | TEXT | Nome de exibição |
+| `profile_url` | TEXT | URL do perfil |
+| `avatar_url` | TEXT | URL do avatar |
+| `bio` | TEXT | Biografia |
+| `website` | TEXT | Website |
+| `location` | TEXT | Localização |
+| `followers_count` | INT | Seguidores |
+| `following_count` | INT | Seguindo |
+| `posts_count` | INT | Total de posts |
+| `is_verified` | BOOL | Conta verificada |
+| `is_business` | BOOL | Conta comercial |
+| `is_private` | BOOL | Conta privada |
+| `extra_data` | JSONB | Dados específicos da plataforma |
+| `scraped_at` | TIMESTAMPTZ | Data da coleta |
+
+**Constraint:** `UNIQUE(platform, external_id)`
+
+#### 3. `apify.scraped_posts` - Posts e Vídeos
+
+Posts, vídeos, reels, pins, threads de todas as plataformas.
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| `id` | UUID | ID único |
+| `job_id` | UUID | FK para scraping_jobs |
+| `clerk_org_id` | TEXT | ID da organização |
+| `platform` | TEXT | Plataforma de origem |
+| `content_type` | TEXT | post, video, reel, story, short, thread, pin, article |
+| `external_id` | TEXT | ID na plataforma original |
+| `external_url` | TEXT | URL do conteúdo |
+| `author_id` | TEXT | ID do autor |
+| `author_username` | TEXT | Username do autor |
+| `content_text` | TEXT | Texto/legenda |
+| `title` | TEXT | Título (YouTube, Pinterest) |
+| `media_urls` | JSONB | URLs de mídia (imagens, vídeos) |
+| `thumbnail_url` | TEXT | URL da thumbnail |
+| `likes_count` | INT | Curtidas |
+| `comments_count` | INT | Comentários |
+| `shares_count` | INT | Compartilhamentos |
+| `views_count` | INT | Visualizações |
+| `saves_count` | INT | Salvos |
+| `reposts_count` | INT | Reposts |
+| `hashtags` | TEXT[] | Array de hashtags |
+| `mentions` | TEXT[] | Array de menções |
+| `duration_seconds` | INT | Duração (vídeos) |
+| `extra_data` | JSONB | Dados específicos da plataforma |
+| `published_at` | TIMESTAMPTZ | Data de publicação |
+| `scraped_at` | TIMESTAMPTZ | Data da coleta |
+
+**Constraint:** `UNIQUE(platform, external_id)`
+
+#### 4. `apify.scraped_comments` - Comentários
+
+Comentários coletados de posts.
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| `id` | UUID | ID único |
+| `job_id` | UUID | FK para scraping_jobs |
+| `clerk_org_id` | TEXT | ID da organização |
+| `platform` | TEXT | instagram, youtube, linkedin, tiktok |
+| `external_id` | TEXT | ID do comentário |
+| `post_external_id` | TEXT | ID do post relacionado |
+| `post_url` | TEXT | URL do post |
+| `author_id` | TEXT | ID do autor |
+| `author_username` | TEXT | Username do autor |
+| `author_display_name` | TEXT | Nome do autor |
+| `author_avatar_url` | TEXT | Avatar do autor |
+| `content_text` | TEXT | Texto do comentário |
+| `likes_count` | INT | Curtidas |
+| `replies_count` | INT | Respostas |
+| `is_reply` | BOOL | É uma resposta |
+| `parent_comment_id` | TEXT | ID do comentário pai |
+| `published_at` | TIMESTAMPTZ | Data de publicação |
+| `scraped_at` | TIMESTAMPTZ | Data da coleta |
+
+**Constraint:** `UNIQUE(platform, external_id)`
+
+#### 5. `apify.scraped_ads` - Anúncios
+
+Anúncios do Meta Ads Library.
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| `id` | UUID | ID único |
+| `job_id` | UUID | FK para scraping_jobs |
+| `clerk_org_id` | TEXT | ID da organização |
+| `platform` | TEXT | meta_ads, google_ads, tiktok_ads |
+| `external_id` | TEXT | ID do anúncio |
+| `advertiser_id` | TEXT | ID do anunciante |
+| `advertiser_name` | TEXT | Nome do anunciante |
+| `page_id` | TEXT | ID da página |
+| `page_name` | TEXT | Nome da página |
+| `ad_text` | TEXT | Texto do anúncio |
+| `ad_title` | TEXT | Título |
+| `media_urls` | JSONB | URLs de mídia |
+| `thumbnail_url` | TEXT | Thumbnail |
+| `landing_url` | TEXT | URL de destino |
+| `cta_type` | TEXT | Tipo de CTA |
+| `spend_lower` | INT | Gasto mínimo estimado |
+| `spend_upper` | INT | Gasto máximo estimado |
+| `spend_currency` | TEXT | Moeda (default: BRL) |
+| `impressions_lower` | INT | Impressões mín |
+| `impressions_upper` | INT | Impressões máx |
+| `targeting_data` | JSONB | Dados de segmentação |
+| `demographics` | JSONB | Demografia |
+| `regions` | TEXT[] | Regiões |
+| `ad_type` | TEXT | Tipo do anúncio |
+| `is_political` | BOOL | Anúncio político |
+| `funding_entity` | TEXT | Entidade financiadora |
+| `start_date` | DATE | Data início |
+| `end_date` | DATE | Data fim |
+| `is_active` | BOOL | Está ativo |
+| `scraped_at` | TIMESTAMPTZ | Data da coleta |
+
+**Constraint:** `UNIQUE(platform, external_id)`
+
+#### 6. `apify.scraped_boards` - Boards do Pinterest
+
+Boards coletados do Pinterest.
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| `id` | UUID | ID único |
+| `job_id` | UUID | FK para scraping_jobs |
+| `clerk_org_id` | TEXT | ID da organização |
+| `platform` | TEXT | pinterest |
+| `external_id` | TEXT | ID do board |
+| `name` | TEXT | Nome do board |
+| `description` | TEXT | Descrição |
+| `board_url` | TEXT | URL do board |
+| `cover_image_url` | TEXT | Imagem de capa |
+| `owner_id` | TEXT | ID do dono |
+| `owner_username` | TEXT | Username do dono |
+| `pins_count` | INT | Quantidade de pins |
+| `followers_count` | INT | Seguidores |
+| `collaborators_count` | INT | Colaboradores |
+| `is_private` | BOOL | É privado |
+| `is_collaborative` | BOOL | É colaborativo |
+| `category` | TEXT | Categoria |
+| `created_at_platform` | TIMESTAMPTZ | Data criação na plataforma |
+| `scraped_at` | TIMESTAMPTZ | Data da coleta |
+
+**Constraint:** `UNIQUE(platform, external_id)`
+
+#### 7. `apify.profile_metrics_history` - Histórico de Métricas
+
+Histórico de métricas de perfis para análise de evolução (time-series).
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| `id` | UUID | ID único |
+| `profile_id` | UUID | FK para scraped_profiles |
+| `clerk_org_id` | TEXT | ID da organização |
+| `platform` | TEXT | Plataforma |
+| `profile_external_id` | TEXT | ID do perfil na plataforma |
+| `username` | TEXT | Username |
+| `followers_count` | INT | Seguidores |
+| `following_count` | INT | Seguindo |
+| `posts_count` | INT | Posts |
+| `followers_change` | INT | Variação de seguidores |
+| `following_change` | INT | Variação de seguindo |
+| `posts_change` | INT | Variação de posts |
+| `engagement_rate` | NUMERIC | Taxa de engajamento |
+| `recorded_at` | TIMESTAMPTZ | Data do registro |
+
+### Segurança (RLS)
+
+Todas as tabelas têm **Row Level Security (RLS)** habilitado com políticas baseadas em `clerk_org_id`:
+
+```sql
+-- Usuários só podem ver dados da sua organização
+CREATE POLICY "Users can view their org data" ON apify.tabela
+    FOR SELECT USING (clerk_org_id = current_setting('request.jwt.claims', true)::json->>'org_id');
+```
+
+### Queries Úteis
+
+```sql
+-- Jobs recentes de uma organização
+SELECT * FROM apify.scraping_jobs
+WHERE clerk_org_id = 'org_xxx'
+ORDER BY created_at DESC
+LIMIT 10;
+
+-- Posts mais curtidos por plataforma
+SELECT platform, author_username, content_text, likes_count
+FROM apify.scraped_posts
+WHERE clerk_org_id = 'org_xxx'
+ORDER BY likes_count DESC
+LIMIT 10;
+
+-- Evolução de seguidores de um perfil
+SELECT recorded_at, followers_count, followers_change
+FROM apify.profile_metrics_history
+WHERE profile_id = 'uuid_xxx'
+ORDER BY recorded_at;
+
+-- Buscar posts por hashtag
+SELECT * FROM apify.scraped_posts
+WHERE 'brasil' = ANY(hashtags)
+AND platform = 'instagram';
+
+-- Anúncios ativos de uma página
+SELECT * FROM apify.scraped_ads
+WHERE page_name ILIKE '%coca-cola%'
+AND is_active = true;
+```
+
+### Supabase Project
+
+```
+Project ID:  vlrkieseassxjrrbbsmb
+Project:     social-media
+Region:      us-east-1
+Schema:      apify
+```
+
+---
+
 ## Licença
 
 MIT
