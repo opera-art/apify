@@ -3,7 +3,7 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    apify_api_token: str
+    apify_api_key: str
 
     class Config:
         env_file = ".env"
